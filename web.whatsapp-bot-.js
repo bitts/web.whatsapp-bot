@@ -49,11 +49,13 @@ function listenToChat() {
             let th = jQuery(this);
 
             let user = th.find('span.N2dUK').find('._35k-1').attr('title');
-            let group = (!user)?th.find('div._3Dr46').find('._35k-1').attr('title'):'';
+            let group = (typeof user === 'undefined')?th.find('div._3Dr46').find('._35k-1').attr('title'):undefined;
             let lstm = th.find('._15smv').text();
             let tmsg = th.find('div._2vfYK').find('span._1DB2K').text();
             let nmsg = th.find('div._2TiQe').find('span._38M1B').text();
-            console.log('| user: '+ user, '|group: '+ group, '| time: '+ lstm, '| MSG: '+ tmsg,'|Nº MSG: '+ nmsg);
+            if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
+                console.log('| user: '+ user, '|group: '+ group, '| time: '+ lstm, '| MSG: '+ tmsg,'|Nº MSG: '+ nmsg);
+            }
 
          });
     /*
