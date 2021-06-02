@@ -15,27 +15,42 @@ var DEBUG = true;
 var jq = document.createElement('script');
 jq.onload = function() {
     jQuery.noConflict();
-    console.log('jQuery loaded');
-    setTimeout(Main, 3500);
-};
-jq.src = "//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js";
-document.getElementsByTagName('head')[0].appendChild(jq);
+    if(DEBUG)console.log('jQuery loaded');
 
-function Main() {
-    console.log("[WACB] Esperando que o chat carregue");
-    //jQuery("#pane-side").on("click", function() {
+    function Main() {
+        if(DEBUG)console.log("[WACB] Esperando que o chat carregue");
+        //jQuery("#pane-side").on("click", function() {
         setTimeout(listenToChat, 350);
-    //});
-}
+        //});
+    }
 
+    function notify(titulo, mensagem) {
+        var icon = jQuery('#favoicon').attr('src');
+        var havePermission = window.webkitNotifications.checkPermission();
+        if (havePermission == 0) {
+            // 0 is PERMISSION_ALLOWED
+            var notification = window.webkitNotifications.createNotification(
+                icon,
+                titulo,
+                mensagem
+            );
 
+            notification.onclick = function () {
+                //window.open("http://stackoverflow.com/a/13328397/1269037");
+                notification.close();
+            }
+            notification.show();
+        } else {
+            window.webkitNotifications.requestPermission();
+        }
+    }
 
-function getCall(){
-    let retorno = [];
-    jQuery("div#pane-side")
-        .find("[aria-label='Lista de conversas']")
-        .find('div._2aBzC')
-        .each(function(i, obj){
+    function getCall(){
+        var retorno = new Array();
+        jQuery("div#pane-side")
+            .find("[aria-label='Lista de conversas']")
+            .find('div._2aBzC')
+            .each(function(i, obj){
             let th = jQuery(this);
             let user = th.find('span.N2dUK').find('._35k-1').attr('title');
             let group = (typeof user === 'undefined')?th.find('div._3Dr46').find('._35k-1').attr('title'):undefined;
@@ -43,16 +58,17 @@ function getCall(){
             let tmsg = th.find('div._2vfYK').find('span._1DB2K').text();
             let nmsg = th.find('div._2TiQe').find('span._38M1B').text();
             if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
-                retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg });
+                retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg, 'elem': th });
                 if(DEBUG)console.log('[WACB] | user: '+ user, '| group: '+ group, '| time: '+ lstm, '| message: '+ tmsg,'| nº message: '+ nmsg);
+                //notify(user, tmsg);
             }
         });
-    return retorno;
-}
+        return retorno;
+    }
 
-function listenToChat() {
-    console.log("[WACB] Ouvindo bate-papo");
-    /*
+    function listenToChat() {
+        console.log("[WACB] Ouvindo bate-papo");
+        /*
     jQuery(".message-list").bind("DOMSubtreeModified", function() {
         var new_msg = jQuery(".selectable-text").last().text();
         console.log("[WACB] Nova mensagem de chat: \n" + new_msg);
@@ -67,23 +83,23 @@ function listenToChat() {
     });
     */
 
-    unsafeWindow.sendMsg = function(msg) {
-        console.log("[WACB] Enviando mensagem: \n" + msg);
-        var target = document.getElementsByClassName("input")[1];
-        var eventType = "textInput";
-        var evt = document.createEvent("TextEvent");
-        evt.initTextEvent(eventType, true, true, unsafeWindow, msg, 0, "en-US");
-        target.focus();
-        target.dispatchEvent(evt);
-        jQuery(".send-container").click();
-    };
+        unsafeWindow.sendMsg = function(msg) {
+            console.log("[WACB] Enviando mensagem: \n" + msg);
+            var target = document.getElementsByClassName("input")[1];
+            var eventType = "textInput";
+            var evt = document.createEvent("TextEvent");
+            evt.initTextEvent(eventType, true, true, unsafeWindow, msg, 0, "en-US");
+            target.focus();
+            target.dispatchEvent(evt);
+            jQuery(".send-container").click();
+        };
 
-    var callmsg = getCall();
-    console.log(callmsg);
+        var callmsg = getCall();
+        console.log(callmsg);
 
-    var last_msg = jQuery(".selectable-text").last().text();
+        //var last_msg = jQuery(".selectable-text").last().text();
 
-    /*
+        /*
     setInterval(function() {
 
 
@@ -156,4 +172,9 @@ function listenToChat() {
         }
     }, 100);
     */
-}
+    }
+
+    setTimeout(Main, 3500);
+};
+jq.src = "//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js";
+document.getElementsByTagName('head')[0].appendChild(jq);
