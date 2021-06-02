@@ -60,8 +60,13 @@ jq.onload = function() {
             if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
                 retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg, 'elem': th });
                 if(DEBUG)console.log('[WACB] | user: '+ user, '| group: '+ group, '| time: '+ lstm, '| message: '+ tmsg,'| nº message: '+ nmsg);
-                th.trigger('click', function(){
-                    setTimeout(function(){ jQuery('._1sFTb').find('.selectable-text').text('teste'); }, 2000);
+                th.find('div:first').bind("DOMSubtreeModified", function() {
+                
+                    setTimeout(function(){
+                        var txt = jQuery('._1sFTb').find('footer').find('.OTBsx')
+                        txt.text('teste');
+                        console.log(txt.text())
+                    }, 2000);
                 });
             }
         });
