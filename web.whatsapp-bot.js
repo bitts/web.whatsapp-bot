@@ -60,14 +60,16 @@ jq.onload = function() {
             if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
                 retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg, 'elem': th });
                 if(DEBUG)console.log('[WACB] | user: '+ user, '| group: '+ group, '| time: '+ lstm, '| message: '+ tmsg,'| nº message: '+ nmsg);
-                //notify(user, tmsg);
+                th.trigger('click', function(){
+                    setTimeout(function(){ jQuery('._1sFTb').find('.selectable-text').text('teste'); }, 2000);
+                });
             }
         });
         return retorno;
     }
 
     function listenToChat() {
-        console.log("[WACB] Ouvindo bate-papo");
+        if(DEBUG)console.log("[WACB] Ouvindo bate-papo");
         /*
     jQuery(".message-list").bind("DOMSubtreeModified", function() {
         var new_msg = jQuery(".selectable-text").last().text();
