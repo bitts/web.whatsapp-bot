@@ -10,6 +10,8 @@
 // @run-at       document-idle
 // ==/UserScript==
 
+var DEBUG = true;
+
 var jq = document.createElement('script');
 jq.onload = function() {
     jQuery.noConflict();
@@ -24,6 +26,28 @@ function Main() {
     //jQuery("#pane-side").on("click", function() {
         setTimeout(listenToChat, 350);
     //});
+}
+
+
+
+function getCall(){
+    let retorno = [];
+    jQuery("div#pane-side")
+        .find("[aria-label='Lista de conversas']")
+        .find('div._2aBzC')
+        .each(function(i, obj){
+            let th = jQuery(this);
+            let user = th.find('span.N2dUK').find('._35k-1').attr('title');
+            let group = (typeof user === 'undefined')?th.find('div._3Dr46').find('._35k-1').attr('title'):undefined;
+            let lstm = th.find('div._15smv').first().text();
+            let tmsg = th.find('div._2vfYK').find('span._1DB2K').text();
+            let nmsg = th.find('div._2TiQe').find('span._38M1B').text();
+            if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
+                retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg });
+                if(DEBUG)console.log('[WACB] | user: '+ user, '| group: '+ group, '| time: '+ lstm, '| message: '+ tmsg,'| nº message: '+ nmsg);
+            }
+        });
+    return retorno;
 }
 
 function listenToChat() {
@@ -42,23 +66,7 @@ function listenToChat() {
         }
     });
     */
-    jQuery("div#pane-side")
-        .find("[aria-label='Lista de conversas']")
-        .find('div._2aBzC')
-        .each(function(i, obj){
-            let th = jQuery(this);
 
-            let user = th.find('span.N2dUK').find('._35k-1').attr('title');
-            let group = (typeof user === 'undefined')?th.find('div._3Dr46').find('._35k-1').attr('title'):undefined;
-            let lstm = th.find('._15smv').text();
-            let tmsg = th.find('div._2vfYK').find('span._1DB2K').text();
-            let nmsg = th.find('div._2TiQe').find('span._38M1B').text();
-            if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
-                console.log('| user: '+ user, '|group: '+ group, '| time: '+ lstm, '| MSG: '+ tmsg,'|Nº MSG: '+ nmsg);
-            }
-
-         });
-    /*
     unsafeWindow.sendMsg = function(msg) {
         console.log("[WACB] Enviando mensagem: \n" + msg);
         var target = document.getElementsByClassName("input")[1];
@@ -69,8 +77,17 @@ function listenToChat() {
         target.dispatchEvent(evt);
         jQuery(".send-container").click();
     };
+
+    var callmsg = getCall();
+    console.log(callmsg);
+
     var last_msg = jQuery(".selectable-text").last().text();
+
+    /*
     setInterval(function() {
+
+
+
         var new_msg = jQuery(".selectable-text").last().text();
         if (new_msg !== last_msg) {
             console.log("[WACB] New chat message: \n" + new_msg);
