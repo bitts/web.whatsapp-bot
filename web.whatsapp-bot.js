@@ -44,6 +44,21 @@ jq.onload = function() {
             window.webkitNotifications.requestPermission();
         }
     }
+    
+    function sendMessage (message) {
+      window.InputEvent = window.Event || 	window.InputEvent;
+
+      var event = new InputEvent('input', {
+        bubbles: true
+      });
+
+      var ttextbox = document.querySelector('footer div._2_1wd');
+
+      ttextbox.textContent = message;
+      ttextbox.dispatchEvent(event);
+
+      document.querySelector("button._1E0Oz").click();
+    }
 
     function getCall(){
         var retorno = new Array();
@@ -89,7 +104,7 @@ jq.onload = function() {
         }
     });
     */
-
+/*
         unsafeWindow.sendMsg = function(msg) {
             console.log("[WACB] Enviando mensagem: \n" + msg);
             var target = document.getElementsByClassName("input")[1];
@@ -100,7 +115,7 @@ jq.onload = function() {
             target.dispatchEvent(evt);
             jQuery(".send-container").click();
         };
-
+*/
         var callmsg = getCall();
         console.log(callmsg);
 
