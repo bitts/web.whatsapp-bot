@@ -6,9 +6,9 @@ function getMsg(contact)
 	element.dispatchEvent(mouseEvent);
 
 	var eventFire = (MyElement, ElementType) => {
-	  var MyEvent = document.createEvent("MouseEvents");
-	  MyEvent.initMouseEvent(ElementType, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-	  MyElement.dispatchEvent(MyEvent);
+		var MyEvent = document.createEvent("MouseEvents");
+		MyEvent.initMouseEvent(ElementType, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		MyElement.dispatchEvent(MyEvent);
 	};
 
 	var retorno = new Array();
