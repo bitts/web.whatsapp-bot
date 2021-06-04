@@ -21,12 +21,14 @@ function getMsg(contact)
       let regex = new RegExp("\[(.*?)\]", 'g');
       //console.log(time_msg.match(regex))
       let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(','); 
-
+      let type_msg = div.classList.contains('message-in')?'IN':'OUT';
+          
       let object = {
         'user_name' : contact,
         'message_lasttime': tm_resul[0],
         'message_lastdate': tm_resul[1],
         'message_text': text_msg,
+        'message_type': type_msg,
         'elem': dmsg
       };
       retorno.push(object);
@@ -80,6 +82,7 @@ function checkMsg(user, msg){
       clearInterval(escutando);
       console.log('Desabilitando Script');
     }
+    
   }
 }
 
@@ -116,13 +119,13 @@ function toListenWW(){
     };
     
     if(!object.user_silence && object.user_type == 'User' && ( object.message_number > 0 || object.message_focus) ){
-      console.log(object);
-      if(object.message_number > 0){
+      if(object.message_number > 0 && !object.message_focus){
         sendMsg(user, 'Olá eu sou o Bot do Marcelo Bittencourt \n Eu posso fazer os seguintes comandos: \n *!about*: Sobre o Bot. \n (Work in progress)');
       }
       object.message_alltext = getMsg(user);
       object.message_lasted = object.message_alltext.pop();
-      checkMsg(user, object.message_lasted.message_text);
+      if(object.message_lasted.message_type == 'IN')
+      	checkMsg(user, object.message_lasted.message_text);
     }
     retorno.push(object);
   });
