@@ -15,17 +15,19 @@ function getMsg(contact)
 	document.querySelectorAll('.GDTQm').forEach((div) => { 
 		let dmsg = div.querySelector('div.copyable-text');
 		if(dmsg){
-			  let time_msg = dmsg.getAttribute('data-pre-plain-text');
-			  let text_msg = dmsg.querySelector('.selectable-text > span').textContent;
-			  let regex = new RegExp("\[(.*?)\]", 'g');
-			  let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(','); 
-			  let type_msg = div.classList.contains('message-in')?'IN':'OUT';
-			  let object = {
-			      'user_name' : contact,
-			      'message_lasttime': tm_resul[0],
-			      'message_lastdate': tm_resul[1],
-			      'message_text': text_msg,
-			      'message_type': type_msg,
+			let time_msg = dmsg.getAttribute('data-pre-plain-text');
+		  	let text_msg = dmsg.querySelector('.selectable-text > span').textContent;
+		  	let regex = new RegExp("\[(.*?)\]", 'g');
+		  	let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(','); 
+		  	let type_msg = div.classList.contains('message-in')?'IN':'OUT';
+			let deslocamento = div.querySelector('div._2kR4B')?true:false;
+		  	let object = {
+				'user_name' : contact,
+				'message_lasttime': tm_resul[0],
+				'message_lastdate': tm_resul[1],
+				'message_text': text_msg,
+				'message_type': type_msg,
+				'message_break' : deslocamento,
 			      //'elem': dmsg
 			  };
 			  retorno.push(object);
@@ -59,33 +61,56 @@ function sendMsg(contact, message, counter = 1)
 }
 
 function checkMsg(user, msg){
-	if (msg.indexOf("!") === 0) {
-		var cmd_line = msg.substring(1);
+  var message;
+  if(msg instanceof Object && !(msg instanceof Array)){
+	message = msg.message_lasted.message_text;
+  }else message = msg;
+  	console.log('Conferindo mensagem / usuario: ', message, user);
+	if (message.indexOf("!") === 0) {
+		var cmd_line = message.substring(1);
 		var cmd = cmd_line.split(" ")[0];
 		var args = cmd_line.split(" ").slice(1);
 		var dftmsg = "";
+
 		dftmsg += "Eu posso fazer os seguintes comandos:\n ";
 		dftmsg += "*!about*: Sobre o Bot.\n ";
 		dftmsg += "*!json*: Retorna dados do web.whatsapp utilizados no Bot.\n ";
 		dftmsg += "*!joke*: Retorna uma piada aleatória (about Chuck Norris).\n ";
 		dftmsg += "(Work in progress)";
 
-		if (cmd == "help") {
-			sendMsg(user, dftmsg);
-		}
-		if (cmd == "about") {
-			sendMsg(user, "I am a chat bot.");
-		}
-		if( cmd == "destroy" && escutando){
-			clearInterval(escutando);
-			console.log('Desabilitando Script');
-		}
-		if( cmd == "json"){
-			var data = toListenWW();
-			var txt = JSON.stringify(data, undefined, 4);
-			sendMsg(user, txt);
-		}
-	}
+	    	switch(cmd){
+			case 'help':
+				message = dftmsg;  
+			break;
+			case 'about':
+				message = 'I am a chat bot!\n\n Em constante criação. \n Create by Bitts (Marcelo Bitts d\'Valvassori) \n v1.0 - 05/06/2021';
+			break;
+			case 'destroy':
+				message = 'Desabilitando Script';  
+				if(escutando){
+					if(clearInterval(escutando))message += '\n Desabilitado!';  
+				}else message = 'Não habilitado';  
+			break;
+			case 'json':
+				var data = toListenWW();
+				const getCircularReplacer = () => {
+				const seen = new WeakSet();
+					return (key, value) => {
+						if (typeof value === "object" && value !== null) {
+							if (seen.has(value))return;
+							seen.add(value);
+						}
+						return value;
+					};
+				};
+				var txt = JSON.stringify(data, getCircularReplacer(), 4);
+				message = txt;        
+		      break;
+		      default : message = 'Comando: ['+ cmd + '] inválido. \n\n' + dftmsg;
+	    	}
+		console.log('Para usuário / resposta: ', message, user);
+		sendMsg(user, message);
+  	}
 }
 
 function toListenWW(){
@@ -117,7 +142,7 @@ function toListenWW(){
 			'message_text': tmsg,
 			'message_number' : nmsg,
 			'message_focus' : onFocus,
-			'elem': div
+			//'elem': div
 		};
 		retorno.push(object);
 	});
@@ -127,20 +152,6 @@ function toListenWW(){
 
 function call(){
 	var obj = toListenWW();
-	const getCircularReplacer = () => {
-		const seen = new WeakSet();
-		return (key, value) => {
-		    if (typeof value === "object" && value !== null) {
-			if (seen.has(value)) {
-			    return;
-			}
-			seen.add(value);
-		    }
-		    return value;
-		};
-	};
-	var txt = JSON.stringify(obj, getCircularReplacer(), 4);
-	console.log(txt);
 	[].forEach.call(obj, function(o) {
 		if(!o.user_silence && o.user_type == 'User' && ( o.message_number > 0 || o.message_focus) ){
 			if(o.message_number > 0 && !o.message_focus){
@@ -149,7 +160,7 @@ function call(){
 			o.message_alltext = getMsg(o.user_name);
 			o.message_lasted = o.message_alltext.pop();
 			if(o.message_lasted.message_type == 'IN')
-				checkMsg(o.user_name, o.message_lasted.message_text);
+				checkMsg(o.user_name, o);
 		}
 	});
 }
