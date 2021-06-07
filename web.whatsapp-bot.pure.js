@@ -1,10 +1,8 @@
-function getMsg(contact)
-{
+function getMsg(contact){
 	var element = document.querySelector('[title="' + contact + '"]')
 	var mouseEvent = document.createEvent('MouseEvents');
 	mouseEvent.initEvent('mousedown', true, true);
 	element.dispatchEvent(mouseEvent);
-
 	var eventFire = (MyElement, ElementType) => {
 		var MyEvent = document.createEvent("MouseEvents");
 		MyEvent.initMouseEvent(ElementType, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
@@ -15,31 +13,28 @@ function getMsg(contact)
 	document.querySelectorAll('.GDTQm').forEach((div) => { 
 		let dmsg = div.querySelector('div.copyable-text');
 		if(dmsg){
-			let time_msg = dmsg.getAttribute('data-pre-plain-text');
-		  	let text_msg = dmsg.querySelector('.selectable-text > span').textContent;
-		  	let regex = new RegExp("\[(.*?)\]", 'g');
-		  	let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(','); 
-		  	let type_msg = div.classList.contains('message-in')?'IN':'OUT';
-			let deslocamento = div.querySelector('div._2kR4B')?true:false;
-		  	let object = {
-				'user_name' : contact,
-				'message_lasttime': tm_resul[0],
-				'message_lastdate': tm_resul[1],
-				'message_text': text_msg,
-				'message_type': type_msg,
-				'message_break' : deslocamento,
+			  let time_msg = dmsg.getAttribute('data-pre-plain-text');
+			  let text_msg = dmsg.querySelector('.selectable-text > span').textContent;
+			  let regex = new RegExp("\[(.*?)\]", 'g');
+			  let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(','); 
+			  let type_msg = div.classList.contains('message-in')?'IN':'OUT';
+      	let deslocamento = div.querySelector('div._2kR4B')?true:false;
+			  let object = {
+			      'user_name' : contact,
+			      'message_lasttime': tm_resul[0],
+			      'message_lastdate': tm_resul[1],
+			      'message_text': text_msg,
+			      'message_type': type_msg,
+          	'message_break' : deslocamento,
 			      //'elem': dmsg
 			  };
 			  retorno.push(object);
 		}
 	});
-
 	return retorno;
 }
 
-
-function sendMsg(contact, message, counter = 1)
-{
+function sendMsg(contact, message, counter = 1){
 	var element = document.querySelector('[title="' + contact + '"]')
 	var mouseEvent = document.createEvent('MouseEvents');
 	mouseEvent.initEvent('mousedown', true, true);
@@ -61,11 +56,11 @@ function sendMsg(contact, message, counter = 1)
 }
 
 function checkMsg(user, msg){
-  var message;
-  if(msg instanceof Object && !(msg instanceof Array)){
+	var message;
+	if(msg instanceof Object && !(msg instanceof Array)){
 	message = msg.message_lasted.message_text;
-  }else message = msg;
-  	console.log('Conferindo mensagem / usuario: ', message, user);
+	}else message = msg;
+	console.log('Conferindo mensagem / usuario: ', message, user);
 	if (message.indexOf("!") === 0) {
 		var cmd_line = message.substring(1);
 		var cmd = cmd_line.split(" ")[0];
@@ -79,38 +74,38 @@ function checkMsg(user, msg){
 		dftmsg += "(Work in progress)";
 
 	    	switch(cmd){
-			case 'help':
+	      		case 'help':
 				message = dftmsg;  
-			break;
-			case 'about':
+		      	break;
+		      	case 'about':
 				message = 'I am a chat bot!\n\n Em constante criação. \n Create by Bitts (Marcelo Bitts d\'Valvassori) \n v1.0 - 05/06/2021';
-			break;
-			case 'destroy':
+		      	break;
+		      	case 'destroy':
 				message = 'Desabilitando Script';  
 				if(escutando){
-					if(clearInterval(escutando))message += '\n Desabilitado!';  
+				  if(clearInterval(escutando))message += '\n Desabilitado!';  
 				}else message = 'Não habilitado';  
-			break;
-			case 'json':
+		      	break;
+		      	case 'json':
 				var data = toListenWW();
 				const getCircularReplacer = () => {
-				const seen = new WeakSet();
-					return (key, value) => {
+			  		const seen = new WeakSet();
+				  	return (key, value) => {
 						if (typeof value === "object" && value !== null) {
 							if (seen.has(value))return;
-							seen.add(value);
-						}
+								seen.add(value);
+							}
 						return value;
-					};
+				  	};
 				};
 				var txt = JSON.stringify(data, getCircularReplacer(), 4);
 				message = txt;        
-		      break;
-		      default : message = 'Comando: ['+ cmd + '] inválido. \n\n' + dftmsg;
-	    	}
-		console.log('Para usuário / resposta: ', message, user);
-		sendMsg(user, message);
-  	}
+		      	break;
+		      	default : message = 'Comando: ['+ cmd + '] inválido. \n\n' + dftmsg;
+		    }
+		    console.log('Para usuário / resposta: ', message, user);
+		    sendMsg(user, message);
+	  }
 }
 
 function toListenWW(){
@@ -149,7 +144,6 @@ function toListenWW(){
 	return retorno;
 }
 
-
 function call(){
 	var obj = toListenWW();
 	[].forEach.call(obj, function(o) {
@@ -165,6 +159,10 @@ function call(){
 	});
 }
 
-//var escutando = setInterval(function() {
-  call();
-//}, 1000);
+
+console.log("[jBWW] Esperando que o chat carregue");
+setTimeout(function(){
+  var escutando = setInterval(function() {
+    call();
+  }, 5000);
+},3000);
