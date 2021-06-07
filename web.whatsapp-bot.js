@@ -10,193 +10,235 @@
 // @run-at       document-idle
 // ==/UserScript==
 
-var DEBUG = true;
+var jBWW = {
+    debug : true,
+    escutando : false,
+    refresh : 5000,
+    about : {
+        'author' : 'Marcelo Valvassori Bittencourt',
+        'supportURL':'https://github.com/bitts/web.whatsapp-bot/blob/main/web.whatsapp-bot.js',
+        'create':'2021-06-03',
+        'description':'Bot de respostas para Whatsapp.',
+        'name':'[HK]Bot WebWhatsapp',
+        'namespace':'mbitts.com'
+    },
+    init : function(){
+        if(jBWW.debug)jBWW.log("Carregando script do chat-bot");
+        var escutando = setInterval(function() {
+            jBWW.call();
+        }, jBWW.refresh);
 
-var jq = document.createElement('script');
-jq.onload = function() {
-    jQuery.noConflict();
-    if(DEBUG)console.log('jQuery loaded');
-
-    function Main() {
-        if(DEBUG)console.log("[WACB] Esperando que o chat carregue");
-        //jQuery("#pane-side").on("click", function() {
-        setTimeout(listenToChat, 350);
-        //});
-    }
-
-    function notify(titulo, mensagem) {
-        var icon = jQuery('#favoicon').attr('src');
-        var havePermission = window.webkitNotifications.checkPermission();
-        if (havePermission == 0) {
-            // 0 is PERMISSION_ALLOWED
-            var notification = window.webkitNotifications.createNotification(
-                icon,
-                titulo,
-                mensagem
-            );
-
-            notification.onclick = function () {
-                //window.open("http://stackoverflow.com/a/13328397/1269037");
-                notification.close();
-            }
-            notification.show();
-        } else {
-            window.webkitNotifications.requestPermission();
+    },
+    log : function(txt){
+        if(jBWW.debug){
+            let tm = new Date().toLocaleString();
+            console.log('[jBWW]['+ tm +']', txt);
         }
-    }
-    
-    function sendMessage (message) {
-      window.InputEvent = window.Event || 	window.InputEvent;
+    },
+    call : function(){
+        var obj = jBWW.toListenWW();
+        [].forEach.call(obj, function(o) {
+            if(!o.user_silence && o.user_type == 'User' && ( o.message_number > 0 || o.message_focus) ){
+                if(o.message_number > 0 && !o.message_focus){
+                    jBWW.checkMsg(o.user_name, '!help');
+                }
+                o.message_alltext = jBWW.getMsg(o.user_name);
+                o.message_lasted = o.message_alltext.pop();
+                if(o.message_lasted.message_type == 'IN'){
+                    jBWW.checkMsg(o.user_name, o);
+                }
+            }
+        });
+    },
+    sendMsg : function(contact, message, counter = 1){
+        if(jBWW.debug)jBWW.log('Enviando mensagem para \"'+ contact +'\" : '+ message);
+        var element = document.querySelector('[title="' + contact + '"]')
+        var mouseEvent = document.createEvent('MouseEvents');
+        mouseEvent.initEvent('mousedown', true, true);
+        if(element)element.dispatchEvent(mouseEvent);
 
-      var event = new InputEvent('input', {
-        bubbles: true
-      });
+        var eventFire = (MyElement, ElementType) => {
+            var MyEvent = document.createEvent("MouseEvents");
+            MyEvent.initMouseEvent(ElementType, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            MyElement.dispatchEvent(MyEvent);
+        };
+        let messageBox = document.querySelectorAll("[contenteditable='true']")[1];
+        for (let i = 0; i < counter; i++) {
+            let event = document.createEvent("UIEvents");
+            messageBox.innerHTML = message;//.replace(/ /gm, ''); // test it
+            event.initUIEvent("input", true, true, window, 1);
+            messageBox.dispatchEvent(event);
+            eventFire(document.querySelector('span[data-icon="send"]'), 'click');
+            if(jBWW.debug)jBWW.log('Mensagem enviada.');
+        }
+    },
+    getMsg : function(contact){
+        if(jBWW.debug)jBWW.log('Coletando mensagens de '+ contact);
 
-      var ttextbox = document.querySelector('footer div._2_1wd');
+        var element = document.querySelector('[title="' + contact + '"]')
+        var mouseEvent = document.createEvent('MouseEvents');
+        mouseEvent.initEvent('mousedown', true, true);
+        element.dispatchEvent(mouseEvent);
+        var eventFire = (MyElement, ElementType) => {
+            var MyEvent = document.createEvent("MouseEvents");
+            MyEvent.initMouseEvent(ElementType, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            MyElement.dispatchEvent(MyEvent);
+        };
 
-      ttextbox.textContent = message;
-      ttextbox.dispatchEvent(event);
-
-      document.querySelector("button._1E0Oz").click();
-    }
-
-    function getCall(){
         var retorno = new Array();
-        jQuery("div#pane-side")
-            .find("[aria-label='Lista de conversas']")
-            .find('div._2aBzC')
-            .each(function(i, obj){
-            let th = jQuery(this);
-            let user = th.find('span.N2dUK').find('._35k-1').attr('title');
-            let group = (typeof user === 'undefined')?th.find('div._3Dr46').find('._35k-1').attr('title'):undefined;
-            let lstm = th.find('div._15smv').first().text();
-            let tmsg = th.find('div._2vfYK').find('span._1DB2K').text();
-            let nmsg = th.find('div._2TiQe').find('span._38M1B').text();
-            if(nmsg && nmsg > 0 && typeof user !== 'undefined'){
-                retorno.push({'user' : user, 'group' : group, 'time': lstm, 'msg': tmsg, 'nmsg' : nmsg, 'elem': th });
-                if(DEBUG)console.log('[WACB] | user: '+ user, '| group: '+ group, '| time: '+ lstm, '| message: '+ tmsg,'| nº message: '+ nmsg);
-                th.find('div:first').bind("DOMSubtreeModified", function() {
-                
-                    setTimeout(function(){
-                        var txt = jQuery('._1sFTb').find('footer').find('.OTBsx')
-                        txt.text('teste');
-                        console.log(txt.text())
-                    }, 2000);
-                });
+        document.querySelectorAll('.GDTQm').forEach((div) => {
+            let dmsg = div.querySelector('div.copyable-text');
+            if(dmsg){
+                let time_msg = dmsg.getAttribute('data-pre-plain-text');
+                let text_msg = dmsg.querySelector('.selectable-text > span').textContent;
+                let regex = new RegExp("\[(.*?)\]", 'g');
+                let tm_resul = time_msg.replace(/ /gm, '').replace(contact+':','').replace(/\[|\]/gi,'').split(',');
+                let type_msg = div.classList.contains('message-in')?'IN':'OUT';
+                let deslocamento = div.querySelector('div._2kR4B')?true:false;
+                let object = {
+                    'user_name' : contact,
+                    'message_lasttime': tm_resul[0],
+                    'message_lastdate': tm_resul[1],
+                    'message_text': text_msg,
+                    'message_type': type_msg,
+                    'message_break' : deslocamento,
+                    //'elem': dmsg
+                };
+                retorno.push(object);
             }
         });
         return retorno;
-    }
-
-    function listenToChat() {
-        if(DEBUG)console.log("[WACB] Ouvindo bate-papo");
-        /*
-    jQuery(".message-list").bind("DOMSubtreeModified", function() {
-        var new_msg = jQuery(".selectable-text").last().text();
-        console.log("[WACB] Nova mensagem de chat: \n" + new_msg);
-        if (new_msg.indexOf("!") === 0) {
-            var cmd_line = new_msg.substring(1);
+    },
+    checkMsg : function(user, msg){
+        var message;
+        if(msg instanceof Object && !(msg instanceof Array)){
+            message = msg.message_lasted.message_text;
+        }else message = msg;
+        if(jBWW.debug)jBWW.log('Conferindo mensagem / usuario: '+ user + ' / menssagem: '+ message);
+        if (message.indexOf("!") === 0) {
+            var cmd_line = message.substring(1);
             var cmd = cmd_line.split(" ")[0];
-            var args = cmd_line.split(" ").shift();
-            if (cmd == "about") {
-                sendMsg("Eu sou um chat Bot, feito pelo Bitts.");
-            }
-        }
-    });
-    */
-/*
-        unsafeWindow.sendMsg = function(msg) {
-            console.log("[WACB] Enviando mensagem: \n" + msg);
-            var target = document.getElementsByClassName("input")[1];
-            var eventType = "textInput";
-            var evt = document.createEvent("TextEvent");
-            evt.initTextEvent(eventType, true, true, unsafeWindow, msg, 0, "en-US");
-            target.focus();
-            target.dispatchEvent(evt);
-            jQuery(".send-container").click();
-        };
-*/
-        var callmsg = getCall();
-        console.log(callmsg);
+            var args = cmd_line.split(" ").slice(1);
+            var dftmsg = "";
 
-        //var last_msg = jQuery(".selectable-text").last().text();
+            dftmsg += "Eu posso fazer os seguintes comandos:\n ";
+            dftmsg += "*!about*: Sobre o Bot.\n ";
+            dftmsg += "*!help*: Ajuda.\n ";
+            dftmsg += "*!joke*: Retorna uma piada aleatória (about Chuck Norris).\n ";
+            dftmsg += "(Work in progress)";
 
-        /*
-    setInterval(function() {
-
-
-
-        var new_msg = jQuery(".selectable-text").last().text();
-        if (new_msg !== last_msg) {
-            console.log("[WACB] New chat message: \n" + new_msg);
-            last_msg = new_msg;
-            if (new_msg.indexOf("!") === 0) {
-                var cmd_line = new_msg.substring(1);
-                var cmd = cmd_line.split(" ")[0];
-                var args = cmd_line.split(" ").slice(1);
-                if (cmd == "help") {
-                    sendMsg("Eu posso fazer os seguintes comandos:");
-                    sendMsg("*!about*: Retorna quem eu sou.");
-                    sendMsg("*!joke*: Retorna uma piada aleatória (about Chuck Norris).");
-                    sendMsg("*!weather*: Retorna o tempo corrente in Porto Alegre.");
-                    sendMsg("*!weather <LOCATION>*: Retorna o tempo local em <LOCATION>.");
-                    sendMsg("*!gewis*: Retorna a agenda do Bitts.");
-                    sendMsg("(Work in progress)");
-                }
-                if (cmd == "about") {
-                    sendMsg("I am a chat bot.");
-                }
-                if (cmd == "joke") {
-                    GM_xmlhttpRequest({
-                        method: "GET",
-                        url: "http://api.icndb.com/jokes/random?escape=javascript",
-                        onload: function(response) {
-                            var json = JSON.parse(response.responseText);
-                            sendMsg(json.value.joke);
-                        }
-                    });
-                }
-                if (cmd == "weather") {
-                    var url = "http://api.apixu.com/v1/current.json?key=d0c5d252848043d6af4210418162706&q=Eindhoven";
-                    if (args.length > 0) {
-                        url = "http://api.apixu.com/v1/current.json?key=d0c5d252848043d6af4210418162706&q=" + args[0];
+            switch(cmd){
+                case 'help':
+                    message = dftmsg;
+                    break;
+                case 'about':
+                    message = 'I am a chat bot!\n\n Em constante criação. \n Create by Bitts (Marcelo Bitts d\'Valvassori) \n v1.0 - 05/06/2021';
+                    break;
+                case 'destroy':
+                    message = 'Desabilitando Script';
+                    if(jBWW.escutando){
+                        if(clearInterval(jBWW.escutando))message += '\n Desabilitado!';
+                    }else message = 'Não habilitado';
+                    break;
+                case 'json':
+                    var data = jBWW.toListenWW();
+                    var getCircularReplacer = () => {
+                        const seen = new WeakSet();
+                        return (key, value) => {
+                            if (typeof value === "object" && value !== null) {
+                                if (seen.has(value))return;
+                                seen.add(value);
+                            }
+                            return value;
+                        };
+                    };
+                    var txt = JSON.stringify(data, getCircularReplacer(), 4);
+                    message = txt;
+                    break;
+                case 'joke':
+                    if(GM_xmlhttpRequest){
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url: "http://api.icndb.com/jokes/random?escape=javascript",
+                            onload: function(response) {
+                                var json = JSON.parse(response.responseText);
+                                message = json.value.joke;
+                            }
+                        });
+                    }else if(GM && GM.xmlHttpRequest){
+                        GM.xmlHttpRequest({
+                            method: "GET",
+                            url: "http://www.example.com/",
+                            onload: function(response) {
+                                var json = JSON.parse(response.responseText);
+                                message = json.value.joke;
+                            }
+                        });
                     }
-                    GM_xmlhttpRequest({
-                        method: "GET",
-                        url: url,
-                        onload: function(response) {
-                            var json = JSON.parse(response.responseText);
-                            if (args.length > 0) {
-                                if (json.error) {
-                                    sendMsg("ERROR: Não foi possível encontrar local.");
-                                } else {
-                                    sendMsg("É atualmente " + json.current.temp_c + "°C in " + args[0]);
-                                }
-                            } else {
-                                sendMsg("É atualmente " + json.current.temp_c + "°C em Porto Alegre.");
-                            }
-                        }
-                    });
-                }
-                if (cmd == "gewis") {
-                    GM_xmlhttpRequest({
-                        method: "GET",
-                        url: "https://www.gewis.nl/activity",
-                        onload: function(response) {
-                            var acts = jQuery(".agenda-item-body", response.responseText);
-                            for (var i = 0; i < acts.length; i++) {
-                                sendMsg(jQuery("h4 > a", acts[i]).text().trim() + " - " + jQuery("div.col-md-4 > dl > dd:nth-child(2)", acts[i]).text().trim() + " @ " + jQuery("div.col-md-4 > dl > dd:nth-child(6)", acts[i]).text().trim());
-                            }
-                        }
-                    });
-                }
+                    break;
+                default : message = 'Comando: ['+ cmd + '] inválido. \n\n' + dftmsg;
             }
+            if(jBWW.debug)jBWW.log('Para usuário / resposta: '+ user + ' / '+ message);
+            jBWW.sendMsg(user, message);
         }
-    }, 100);
-    */
-    }
+    },
 
-    setTimeout(Main, 3500);
+    toListenWW : function(){
+        var retorno = new Array();
+        var contacts = document.querySelectorAll("div._2aBzC");
+        [].forEach.call(contacts, function(div) {
+            let user = div.querySelector('._35k-1').getAttribute('title');
+            let tagimg = div.querySelector('img._18-9u');
+            let img = tagimg?tagimg.getAttribute('src'):'';
+            let tpusr = div.querySelector('div.IGI1I');
+            let type = (tpusr)?'User':'Group';
+            let lstm = div.querySelector('div._15smv').textContent;
+            let tmsg = div.querySelector('div._2vfYK').querySelector('span._1DB2K').textContent;
+            let ntmsg = div.querySelector('div._2TiQe:last-child');
+            let nmsg = (ntmsg && ntmsg.querySelector('._38M1B'))?parseInt(ntmsg.querySelector('._38M1B').textContent):0;
+            let slc = div.querySelector('div._2TiQe:first-child');
+            let silence = (slc && slc.getAttribute('aria-label') == "Conversa silenciada")?true:false;
+            let onFocus = (div.firstElementChild.getAttribute('aria-selected')=="true")?true:false;
+
+            let object = {
+                'user_name' : user,
+                'user_type' : type,
+                'user_silence': silence,
+                'message_lasttime': lstm,
+                'message_text': tmsg,
+                'message_number' : nmsg,
+                'message_focus' : onFocus,
+                //'elem': div
+            };
+            retorno.push(object);
+        });
+        return retorno;
+    }
 };
-jq.src = "//ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js";
-document.getElementsByTagName('head')[0].appendChild(jq);
+
+console.log("[jBWW] Esperando que o chat carregue");
+window.addEventListener("load", function() {
+    console.log('Page is loaded. \n Load bot script...');
+    setTimeout(function(){ jBWW.init(); }, 3000);
+});
+
+
+function notify(titulo, mensagem) {
+    var icon = document.getElementById('favoicon').attr('src');
+    var havePermission = window.webkitNotifications.checkPermission();
+    if (havePermission == 0) {
+        // 0 is PERMISSION_ALLOWED
+        var notification = window.webkitNotifications.createNotification(
+            icon,
+            titulo,
+            mensagem
+        );
+        notification.onclick = function () {
+            //window.open("http://stackoverflow.com/a/13328397/1269037");
+            notification.close();
+        }
+        notification.show();
+    } else {
+        window.webkitNotifications.requestPermission();
+    }
+}
