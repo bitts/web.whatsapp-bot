@@ -183,6 +183,22 @@ var jBWW = {
                     message += '\n Modo Debug: '+ jBWW.debug;
                     message += '\n Intervalo de escuta (segundos):'+ jBWW.refresh;
                     break;
+                case 'servico':
+                    var data_service = {
+                        method: "GET",
+                        url: "http://volatil.1cta.eb.mil.br/webservice/servico_qgcms.php?data="+args,
+                        onload: function(response) {
+                            message = JSON.stringify(response.responseText, getCircularReplacer(), 4);
+                            //message = response.responseText
+                            if(message!=''){
+                                sendMsg(user, message);
+                                send = true;
+                            }
+                        }
+                    };
+                    if(GM_xmlhttpRequest)GM_xmlhttpRequest(data_service);
+                    else if(GM && GM.xmlHttpRequest)GM.xmlHttpRequest(data_service);
+                    break;
                 default : message = 'Comando: ['+ cmd + '] inválido. \n\n' + dftmsg;
             }
             if(jBWW.debug)jBWW.log('Para usuário / resposta: '+ user + ' / '+ message);
