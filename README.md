@@ -29,13 +29,6 @@ Bot para web.whatsapp.com
 `!json`
 - Retorno JSON com dados 
 
-`!servico [ all | AA-MM-DD ]`
-- Exibi escala de serviço do QGCMS
-```
-    all = todas as datas encontradas
-    
-    AA-MM-DD = Ano-Mes-Dia com dois digitos cada para consultar dia especifico. Ex.: 21-06-13
-```
 
 # [A fazer - idéias]
 
